@@ -50,9 +50,8 @@ def main(argv: list[str] | None = None) -> int:
         shown = path.resolve().relative_to(root).as_posix()
     except ValueError:
         shown = str(path)
-    result = report.compare(
-        scan.scan(root), example.parse(path.read_text(encoding="utf-8")), shown, args.ignore
-    )
+    text = path.read_text(encoding="utf-8")
+    result = report.compare(scan.scan(root), example.parse(text), shown, args.ignore, example.optional(text))
     print({"text": report.text, "json": report.as_json, "github": report.github}[args.format](result))
     return 1 if result.missing or (args.strict and result.unused) else 0
 

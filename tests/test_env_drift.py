@@ -58,6 +58,11 @@ def test_parse_example():
     assert example.parse(text) == {"A": 2, "B": 3, "C": 4}
 
 
+def test_optional_marker():
+    text = "A=  # env-drift: optional\nB=1 #env-drift:Optional\nC=  # optional\n# D=  # env-drift: optional\n"
+    assert example.optional(text) == {"A", "B"}
+
+
 def project(tmp_path: Path, files: dict[str, str]) -> Path:
     for name, body in files.items():
         path = tmp_path / name
@@ -135,3 +140,14 @@ def test_respects_gitignore(tmp_path, capsys):
     )
     subprocess.run(["git", "init", "-q", str(root)], check=True)
     assert cli.main([str(root)]) == 0
+
+
+def test_optional_entries_are_not_unused(tmp_path, capsys):
+    root = project(
+        tmp_path,
+        {".env.example": "A=\nSENTRY_DSN=  # env-drift: optional\nOLD=\n", "x.py": "os.getenv('A')"},
+    )
+    assert cli.main([str(root), "--strict"]) == 1
+    out = capsys.readouterr().out
+    assert "OLD" in out and "SENTRY_DSN" not in out
+    assert "0 missing, 1 unused, 1 documented and used." in out

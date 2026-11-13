@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "env-drift"
-version = "0.1.0"
+version = "0.2.0"
 description = "Find environment variables your code reads that .env.example doesn't list, and listed ones nothing reads."
 readme = "README.md"
 license = "MIT"

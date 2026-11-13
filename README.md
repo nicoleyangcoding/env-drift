@@ -54,6 +54,12 @@ env-drift --strict                           # also fail on unused entries
 env-drift --format json                      # for scripts
 ```
 
+Some entries are fine to leave unused, like a setting only one deploy needs. Mark them in the example file and they won't be reported:
+
+```
+SENTRY_DSN=  # env-drift: optional
+```
+
 ## GitHub Action
 
 ```yaml

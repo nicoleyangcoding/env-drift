@@ -2,6 +2,11 @@
 
 All notable changes are listed here. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and versions follow [Semantic Versioning](https://semver.org/).
 
+## [0.2.0] - 2026-11-13
+
+### Added
+- Mark an example entry with `# env-drift: optional` so it's never reported as unused
+
 ## [0.1.0] - 2026-10-30
 
 ### Added

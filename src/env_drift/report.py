@@ -47,7 +47,13 @@ class Result:
     documented_and_used: int
 
 
-def compare(uses: list[Use], documented: dict[str, int], example: str, ignore: list[str]) -> Result:
+def compare(
+    uses: list[Use],
+    documented: dict[str, int],
+    example: str,
+    ignore: list[str],
+    optional: set[str] | frozenset[str] = frozenset(),
+) -> Result:
     def skipped(name: str) -> bool:
         return (
             name in BUILT_IN
@@ -64,7 +70,7 @@ def compare(uses: list[Use], documented: dict[str, int], example: str, ignore: l
     unused = {
         name: line
         for name, line in sorted(documented.items())
-        if name not in every_name and not skipped(name)
+        if name not in every_name and name not in optional and not skipped(name)
     }
     return Result(example, missing, unused, sum(1 for name in read if name in documented))
 
