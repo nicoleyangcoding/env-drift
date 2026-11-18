@@ -6,7 +6,7 @@ Small, focused releases. Ideas and votes are welcome in [issues](https://github.
 - [ ] `--fix`: append missing names to the example file, each with an empty value and a `# used in <file>` comment
 - [ ] `--fix --remove-unused`: comment out unused entries instead of deleting them
 - [x] Read `# env-drift: optional` on an example line to mark a variable as allowed-unused
-- [ ] An inline `env-drift: ignore` comment on a code line to skip that read
+- [x] An inline `env-drift: ignore` comment on a code line to skip that read
 - [ ] Count reads in `docker-compose.yml` (`${NAME}` and `environment:` keys) as uses
 
 ## 0.3

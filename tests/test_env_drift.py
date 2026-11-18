@@ -151,3 +151,20 @@ def test_optional_entries_are_not_unused(tmp_path, capsys):
     out = capsys.readouterr().out
     assert "OLD" in out and "SENTRY_DSN" not in out
     assert "0 missing, 1 unused, 1 documented and used." in out
+
+
+@pytest.mark.parametrize(
+    ("file", "text"),
+    [
+        ("a.ts", "const k = process.env.LOCAL_ONLY // env-drift: ignore"),
+        ("a.py", "os.getenv('LOCAL_ONLY')  # env-drift: ignore"),
+        ("a.go", 'os.Getenv("LOCAL_ONLY") /* ENV-DRIFT:IGNORE */'),
+    ],
+)
+def test_inline_ignore(file, text):
+    assert names(text, file) == []
+
+
+def test_inline_ignore_only_skips_its_own_line():
+    text = "process.env.A // env-drift: ignore\nprocess.env.B\n"
+    assert scan.scan_text(text, "a.js") == [scan.Use("B", "a.js", 2)]

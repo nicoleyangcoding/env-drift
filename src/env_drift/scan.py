@@ -49,6 +49,7 @@ SUFFIXES = {
 
 # const { API_URL, TOKEN: token, DEBUG = "0" } = process.env
 _DESTRUCTURE = re.compile(r"\{([^{}]*)\}\s*=\s*(?:process\.env|import\.meta\.env|Bun\.env)\b")
+_IGNORE = re.compile(r"env-drift:\s*ignore\b", re.IGNORECASE)
 
 SKIP_DIRS = {
     ".git",
@@ -94,6 +95,8 @@ def scan_text(text: str, file: str) -> list[Use]:
     patterns = LANGUAGES[language]
     found = []
     for number, line in enumerate(text.splitlines(), start=1):
+        if _IGNORE.search(line):
+            continue
         names = [m.group(1) for p in patterns for m in p.finditer(line)]
         if language == "js":
             names += _destructured(line)

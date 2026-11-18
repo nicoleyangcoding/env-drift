@@ -60,6 +60,12 @@ Some entries are fine to leave unused, like a setting only one deploy needs. Mar
 SENTRY_DSN=  # env-drift: optional
 ```
 
+To skip a read in code, like a variable only your local scripts use, add an `env-drift: ignore` comment on the same line:
+
+```ts
+const token = process.env.LOCAL_DEBUG_TOKEN // env-drift: ignore
+```
+
 ## GitHub Action
 
 ```yaml
