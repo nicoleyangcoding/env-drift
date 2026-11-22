@@ -34,3 +34,13 @@ def optional(text: str) -> set[str]:
         for line in text.splitlines()
         if (match := _LINE.match(line)) and _OPTIONAL.search(line, match.end())
     }
+
+
+def repeated(text: str) -> list[list[tuple[str, int]]]:
+    """Entries that appear more than once, or whose names differ only by case, with their lines."""
+    groups: dict[str, list[tuple[str, int]]] = {}
+    for number, line in enumerate(text.splitlines(), start=1):
+        match = _LINE.match(line)
+        if match:
+            groups.setdefault(match.group(1).upper(), []).append((match.group(1), number))
+    return [group for group in groups.values() if len(group) > 1]

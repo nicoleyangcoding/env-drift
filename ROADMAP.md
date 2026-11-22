@@ -26,7 +26,7 @@ Small, focused releases. Ideas and votes are welcome in [issues](https://github.
 ## 0.5
 - [ ] Also compare against `.env` (names only, never values) with `--local`, to show what your own setup is missing
 - [ ] Check that every name in the example also appears in the deployment config (`vercel.json`, `fly.toml`, `render.yaml`, `app.json`)
-- [ ] Detect duplicate names in the example file and names that differ only by case
+- [x] Detect duplicate names in the example file and names that differ only by case
 - [ ] Warn about example values that look like real secrets (long random strings, `sk_live_`, `AKIA`)
 
 ## Later

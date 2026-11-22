@@ -63,6 +63,12 @@ def test_optional_marker():
     assert example.optional(text) == {"A", "B"}
 
 
+def test_repeated_entries():
+    text = "A=1\nB=\n# A=old\nexport A=2\napi_key=\nAPI_KEY=\nC=\n"
+    assert example.repeated(text) == [[("A", 1), ("A", 4)], [("api_key", 5), ("API_KEY", 6)]]
+    assert example.repeated("A=\nB=\n") == []
+
+
 def project(tmp_path: Path, files: dict[str, str]) -> Path:
     for name, body in files.items():
         path = tmp_path / name
@@ -168,3 +174,27 @@ def test_inline_ignore(file, text):
 def test_inline_ignore_only_skips_its_own_line():
     text = "process.env.A // env-drift: ignore\nprocess.env.B\n"
     assert scan.scan_text(text, "a.js") == [scan.Use("B", "a.js", 2)]
+
+
+def test_repeated_entries_report(tmp_path, capsys):
+    root = project(
+        tmp_path,
+        {".env.example": "A=\nTOKEN=\nA=\ntoken=\n", "x.py": "os.getenv('A'); os.getenv('TOKEN')"},
+    )
+    assert cli.main([str(root)]) == 0
+    out = capsys.readouterr().out
+    assert "Repeated in .env.example:" in out
+    assert "A              lines 1, 3 (defined 2 times)" in out
+    assert "TOKEN / token  lines 2, 4 (names differ only by case)" in out
+    assert "0 missing, 1 unused, 2 repeated, 2 documented and used." in out
+    assert cli.main([str(root), "--strict"]) == 1
+    capsys.readouterr()
+    cli.main([str(root), "--format", "json"])
+    assert json.loads(capsys.readouterr().out)["repeated"] == [
+        {"names": ["A"], "lines": [1, 3]},
+        {"names": ["TOKEN", "token"], "lines": [2, 4]},
+    ]
+    cli.main([str(root), "--format", "github"])
+    out = capsys.readouterr().out
+    assert "::warning file=.env.example,line=3,title=env-drift::A is already defined on line 1" in out
+    assert "line=4,title=env-drift::token differs only by case from TOKEN on line 2" in out

@@ -23,7 +23,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--ignore", action="append", default=[], metavar="NAME", help="skip a name or glob (repeatable)"
     )
-    parser.add_argument("--strict", action="store_true", help="also fail when the example has unused entries")
+    parser.add_argument("--strict", action="store_true", help="also fail on unused or repeated entries")
     parser.add_argument("--format", choices=("text", "json", "github"), default="text")
     parser.add_argument("--version", action="version", version=f"env-drift {__version__}")
     return parser
@@ -51,9 +51,16 @@ def main(argv: list[str] | None = None) -> int:
     except ValueError:
         shown = str(path)
     text = path.read_text(encoding="utf-8")
-    result = report.compare(scan.scan(root), example.parse(text), shown, args.ignore, example.optional(text))
+    result = report.compare(
+        scan.scan(root),
+        example.parse(text),
+        shown,
+        args.ignore,
+        example.optional(text),
+        example.repeated(text),
+    )
     print({"text": report.text, "json": report.as_json, "github": report.github}[args.format](result))
-    return 1 if result.missing or (args.strict and result.unused) else 0
+    return 1 if result.missing or (args.strict and (result.unused or result.repeated)) else 0
 
 
 if __name__ == "__main__":

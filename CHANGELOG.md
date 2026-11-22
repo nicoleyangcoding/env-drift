@@ -2,10 +2,11 @@
 
 All notable changes are listed here. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and versions follow [Semantic Versioning](https://semver.org/).
 
-## [0.3.0] - 2026-11-18
+## [0.3.0] - 2026-11-22
 
 ### Added
 - Skip a read by putting an `env-drift: ignore` comment on the same line
+- Report example entries that are defined twice, or whose names differ only by case
 
 ## [0.2.0] - 2026-11-13
 

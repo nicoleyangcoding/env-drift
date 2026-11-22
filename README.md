@@ -50,9 +50,11 @@ It skips files git ignores, plus `node_modules`, virtual environments and build 
 env-drift services/api                       # check one folder of a monorepo
 env-drift --example config/.env.sample       # use a different example file
 env-drift --ignore 'DEBUG_*' --ignore LOCAL  # skip names or globs
-env-drift --strict                           # also fail on unused entries
+env-drift --strict                           # also fail on unused or repeated entries
 env-drift --format json                      # for scripts
 ```
+
+It also points out entries that appear twice in the example file, or whose names differ only by case (`API_KEY` and `Api_Key`), since only one of them can be the one your code reads.
 
 Some entries are fine to leave unused, like a setting only one deploy needs. Mark them in the example file and they won't be reported:
 

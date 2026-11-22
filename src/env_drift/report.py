@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import fnmatch
 import json
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 from .scan import Use
 
@@ -45,6 +45,7 @@ class Result:
     missing: dict[str, list[Use]]
     unused: dict[str, int]
     documented_and_used: int
+    repeated: list[list[tuple[str, int]]] = field(default_factory=list)
 
 
 def compare(
@@ -53,6 +54,7 @@ def compare(
     example: str,
     ignore: list[str],
     optional: set[str] | frozenset[str] = frozenset(),
+    repeated: list[list[tuple[str, int]]] | None = None,
 ) -> Result:
     def skipped(name: str) -> bool:
         return (
@@ -72,7 +74,14 @@ def compare(
         for name, line in sorted(documented.items())
         if name not in every_name and name not in optional and not skipped(name)
     }
-    return Result(example, missing, unused, sum(1 for name in read if name in documented))
+    used = sum(1 for name in read if name in documented)
+    return Result(example, missing, unused, used, list(repeated or []))
+
+
+def _repeat_label(group: list[tuple[str, int]]) -> tuple[str, str]:
+    spellings = list(dict.fromkeys(name for name, _ in group))
+    reason = f"defined {len(group)} times" if len(spellings) == 1 else "names differ only by case"
+    return " / ".join(spellings), reason
 
 
 def _where(uses: list[Use], limit: int = 3) -> str:
@@ -93,13 +102,22 @@ def text(result: Result) -> str:
         out.append(f"Unused in {result.example} (nothing reads these):")
         out += [f"  {name:<{width}}  {result.example}:{line}" for name, line in result.unused.items()]
         out.append("")
-    if not result.missing and not result.unused:
+    if result.repeated:
+        labels = [_repeat_label(group) for group in result.repeated]
+        width = max(len(label) for label, _ in labels)
+        out.append(f"Repeated in {result.example}:")
+        for group, (label, reason) in zip(result.repeated, labels):
+            lines = ", ".join(str(line) for _, line in group)
+            out.append(f"  {label:<{width}}  lines {lines} ({reason})")
+        out.append("")
+    if not result.missing and not result.unused and not result.repeated:
         out.append(
             f"All good: every variable your code reads is in {result.example}, and every entry is used."
         )
     else:
+        repeated = f"{len(result.repeated)} repeated, " if result.repeated else ""
         out.append(
-            f"{len(result.missing)} missing, {len(result.unused)} unused, "
+            f"{len(result.missing)} missing, {len(result.unused)} unused, {repeated}"
             f"{result.documented_and_used} documented and used."
         )
     return "\n".join(out)
@@ -119,6 +137,14 @@ def github(result: Result) -> str:
             f"::warning file={result.example},line={line},title=env-drift::"
             f"{name} is documented but never read"
         )
+    for group in result.repeated:
+        first, first_line = group[0]
+        for name, line in group[1:]:
+            problem = "is already defined" if name == first else f"differs only by case from {first}"
+            out.append(
+                f"::warning file={result.example},line={line},title=env-drift::"
+                f"{name} {problem} on line {first_line}"
+            )
     return "\n".join(out + [text(result)])
 
 
@@ -131,6 +157,13 @@ def as_json(result: Result) -> str:
                 for name, uses in result.missing.items()
             ],
             "unused": [{"name": name, "line": line} for name, line in result.unused.items()],
+            "repeated": [
+                {
+                    "names": list(dict.fromkeys(name for name, _ in group)),
+                    "lines": [line for _, line in group],
+                }
+                for group in result.repeated
+            ],
             "documented_and_used": result.documented_and_used,
         },
         indent=2,
